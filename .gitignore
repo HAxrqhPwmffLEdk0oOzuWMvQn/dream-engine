@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv/
+
+# Dream Engine runtime data
+state/
+dreams/
+.env
+
+# OS
+.DS_Store
+memory-bank/
+main.py
+CLAUDE.md

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spark Dream | Gaps</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="index.html" class="nav-logo">
+        <span class="spark">SPARK</span> DREAM
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a><a href="projects.html">Projects</a><a href="connections.html">Connections</a><a href="dreams.html">Dreams</a><a href="gaps.html" class="active">Gaps</a><a href="/admin" style="opacity:0.5">Admin</a>
+      </div>
+    </div>
+  </nav>
+  
+  <header class="page-header">
+    <div class="container">
+      <h1>Gaps &amp; Unrealized Potential</h1>
+      <p class="subtitle">20 hidden capabilities, 15 dead code findings, 23 unanalyzed projects</p>
+    </div>
+  </header>
+  <section class="section">
+    <div class="container">
+      <h2>Hidden Capabilities</h2>
+      <p class="section-subtitle">Code that exists but isn't being used to its full potential</p>
+      <table class="data-table"><thead><tr><th>Project</th><th>Capability</th></tr></thead><tbody><tr><td class='font-mono'>milady</td><td>VM-sandboxed custom action execution with SSRF protection at src/runtime/custom-actions.ts:129-175</td></tr><tr><td class='font-mono'>milady</td><td>Apple Container support as Docker alternative at src/services/sandbox-manager.ts:57-58</td></tr><tr><td class='font-mono'>milady</td><td>Full trajectory logging for RLHF training at src/runtime/trajectory-persistence.ts:43-90</td></tr><tr><td class='font-mono'>milady</td><td>On-chain learning provenance via Merkle root NFAs at packages/plugin-bnb-identity/src/index.ts:17-28</td></tr><tr><td class='font-mono'>milady</td><td>TTS-to-stream audio bridge for live agent speech at src/services/stream-manager.ts:33</td></tr><tr><td class='font-mono'>milady</td><td>Extensible self-awareness via contributor registry at src/awareness/registry.ts:79-96</td></tr><tr><td class='font-mono'>milady</td><td>Pi.AI model provider gated behind MILADY_USE_PI_AI=1 at src/runtime/eliza.ts:733-738</td></tr><tr><td class='font-mono'>milady</td><td>WhatsApp via reverse-engineered Baileys library at src/plugins/whatsapp/service.ts:82-518</td></tr><tr><td class='font-mono'>milady</td><td>Prediction market autonomous trading at src/plugins/opinion/index.ts:59-66</td></tr><tr><td class='font-mono'>apple-family-billing</td><td>matched_charge_id field for Venmo→charge linking (src/models.py:69) — never populated</td></tr><tr><td class='font-mono'>apple-family-billing</td><td>Period-based balances (src/models.py:143) — only 'all' period used</td></tr><tr><td class='font-mono'>apple-family-billing</td><td>csv_filename tracking (src/models.py:68) — stored but never displayed</td></tr><tr><td class='font-mono'>apple-family-billing</td><td>LLM health check (src/llm_extractor.py:80-89) — only used in config page</td></tr><tr><td class='font-mono'>ACE-Step-1.5</td><td>Runtime LoRA injection without model reinitialization at handler.py:1850-1920</td></tr><tr><td class='font-mono'>ACE-Step-1.5</td><td>Per-phase temperature control (metadata vs codes) at constrained_logits_processor.py:124-125</td></tr><tr><td class='font-mono'>ACE-Step-1.5</td><td>GPU VRAM simulation via MAX_CUDA_VRAM env var at gpu_config.py:19-21</td></tr><tr><td class='font-mono'>ACE-Step-1.5</td><td>Parallel batch LM generation at llm_inference.py:450-500</td></tr><tr><td class='font-mono'>ACE-Step-1.5</td><td>Streaming SSE responses at openrouter_api_server.py:393-430</td></tr><tr><td class='font-mono'>ACE-Step-1.5</td><td>Natural language hint parsing (language/instrumental detection) at api_server.py:346-400</td></tr><tr><td class='font-mono'>ACE-Step-1.5</td><td>Bidirectional consensus DTW alignment at dit_alignment_score.py:159-190</td></tr></tbody></table>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container">
+      <h2>Dead Code Worth Reviving</h2>
+      <table class="data-table"><thead><tr><th>Project</th><th>Description</th></tr></thead><tbody><tr><td class='font-mono'>milady</td><td>packages/psyop/cli.js - parked placeholder, never implemented</td></tr><tr><td class='font-mono'>milady</td><td>src/plugins/retake/ - skeletal directory structure only</td></tr><tr><td class='font-mono'>milady</td><td>src/plugins/telegram-enhanced/ - likely superseded by main connector system</td></tr><tr><td class='font-mono'>milady</td><td>src/plugins/custom-rtmp/ - basic implementation superseded by streaming-base</td></tr><tr><td class='font-mono'>milady</td><td>Five plugin stubs commented out: directives, commands, mcp, scheduling, scratchpad at src/runtime/core-plugins.ts:48-53</td></tr><tr><td class='font-mono'>apple-family-billing</td><td>import_all_venmo.py:10 — imports non-existent filter_apple_related function</td></tr><tr><td class='font-mono'>apple-family-billing</td><td>src/venmo_reconciler.py:98 — syntax error (her_apple.music), entire file abandoned</td></tr><tr><td class='font-mono'>apple-family-billing</td><td>venmo_parser_fixed.py — orphaned root-level duplicate with wrong import path</td></tr><tr><td class='font-mono'>apple-family-billing</td><td>src/venmo_ingester.py — analysis script with hardcoded data, never called</td></tr><tr><td class='font-mono'>apple-family-billing</td><td>update_balances.py:9 — incorrect DB_PATH resolution</td></tr><tr><td class='font-mono'>apple-family-billing</td><td>import_venmo.py — incomplete script with hardcoded test data</td></tr><tr><td class='font-mono'>ACE-Step-1.5</td><td>dataset_handler.py - minimally used dataset utilities</td></tr><tr><td class='font-mono'>ACE-Step-1.5</td><td>scripts/prepare_vae_calibration_data.py - VAE calibration development artifact</td></tr><tr><td class='font-mono'>ACE-Step-1.5</td><td>generate_examples.py - standalone example generator not integrated</td></tr><tr><td class='font-mono'>ACE-Step-1.5</td><td>profile_inference.py - profiling development tool</td></tr></tbody></table>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container">
+      <h2>Not Yet Analyzed</h2>
+      <p class="section-subtitle">These projects have memory-banks but no deep dream analysis yet</p>
+      <ul class="unanalyzed-list"><li>audius-dev</li><li>augarta</li><li>browser-use</li><li>checkpoint-ascii</li><li>claude-vibe-coder-eval</li><li>clawdbot</li><li>comfyui-docker</li><li>deck-intelligence</li><li>eigent</li><li>elizaos</li><li>gmail-expense-tracker</li><li>gmail-lead-intel</li><li>llama-cpp-server</li><li>nym-vpn</li><li>opencode</li><li>pdfcraft</li><li>photo-pipeline</li><li>pinterest-pipeline</li><li>qwen-agent</li><li>qwen3-tts</li><li>sglang</li><li>spark-dashboard</li><li>telegram-project</li></ul>
+    </div>
+  </section>
+  <footer>
+    <div class="container">
+      <p>Generated 2026-03-15 10:45 by Spark Dream Engine</p>
+    </div>
+  </footer>
+</body>
+</html>

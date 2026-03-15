@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spark Dream | Dreams</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="index.html" class="nav-logo">
+        <span class="spark">SPARK</span> DREAM
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a><a href="projects.html">Projects</a><a href="connections.html">Connections</a><a href="dreams.html" class="active">Dreams</a><a href="gaps.html">Gaps</a><a href="/admin" style="opacity:0.5">Admin</a>
+      </div>
+    </div>
+  </nav>
+  
+  <header class="page-header">
+    <div class="container">
+      <h1>Dreams</h1>
+      <p class="subtitle">9 project proposals from deep analysis</p>
+    </div>
+  </header>
+  <section class="section">
+    <div class="container">
+      <div class="dream-grid">
+        
+        <div class="dream-card">
+          <h3>Milady-CosyWorld Bridge</h3>
+          <p>A bidirectional message bridge that routes Discord messages from CosyWorld agents to WhatsApp users via Milady's Baileys integration, enabling cross-platform agent conversations</p>
+          <p class="dream-combines">Combines: milady, cosyworld</p>
+          <p class="dream-arch">CosyWorld Discord Bot -> Milady API (/api/whatsapp/send) -> WhatsApp via Baileys; reverse path via WhatsApp webhook -> Milady -> Discord webhook to CosyWorld channel</p>
+        </div>
+        <div class="dream-card">
+          <h3>On-Chain Agent Reputation Network</h3>
+          <p>Use Milady's BNB Identity plugin (ERC-8004 + BAP-578) to create a verifiable reputation system where agents' learning trajectories are anchored on-chain and queryable by other agents</p>
+          <p class="dream-combines">Combines: milady, twenty-crm</p>
+          <p class="dream-arch">Milady NFA minting (learning Merkle roots) -> BNB Chain -> Other agents query via ERC-8004 registry -> Twenty CRM tracks agent relationships and reputation scores</p>
+        </div>
+        <div class="dream-card">
+          <h3>Autonomous Streaming Agent</h3>
+          <p>Combine Milady's streaming capabilities with the dream engine's analysis to create an agent that streams its coding process live, with real-time TTS narration of what it's thinking</p>
+          <p class="dream-combines">Combines: milady, spark-dream-engine</p>
+          <p class="dream-arch">spark-dream-engine triggers deep dream -> Claude Code runs in workspace -> Stream Manager captures terminal via FFmpeg -> TTS bridge narrates agent thoughts -> Output to Twitch/YouTube</p>
+        </div>
+        <div class="dream-card">
+          <h3>milady-patch-manager</h3>
+          <p>A patch management system to track and auto-apply the 10+ node_modules patches that are currently lost on npm install</p>
+          <p class="dream-combines">Combines: milady</p>
+          <p class="dream-arch">CLI tool: detects patches in memory/milady-patches.md -> generates patch files -> registers with pnpm/patch-package -> verifies on postinstall</p>
+        </div>
+        <div class="dream-card">
+          <h3>Trajectory-to-Training Pipeline</h3>
+          <p>Export Milady's trajectory logs to a training pipeline for fine-tuning local models on successful agent interactions</p>
+          <p class="dream-combines">Combines: milady, spark-dream-engine</p>
+          <p class="dream-arch">Milady trajectory API -> ART export format -> Training data curator (spark-dream-engine) -> Fine-tune Qwen on successful trajectories -> Deploy back to SGLang</p>
+        </div>
+        <div class="dream-card">
+          <h3>Family Finance Hub</h3>
+          <p>Unified household finance dashboard combining Apple subscriptions, general expense tracking, and bank statement parsing. Single view of all financial obligations with cross-system Venmo reconciliation.</p>
+          <p class="dream-combines">Combines: apple-family-billing, expense-tracker</p>
+          <p class="dream-arch">Shared FastAPI backend with modular ingestors (Apple/Venmo/Bank), unified member model, common LLM extraction pipeline, single SQLite schema with foreign keys across domains, consolidated HTMX dashboa</p>
+        </div>
+        <div class="dream-card">
+          <h3>Subscription Audit Agent</h3>
+          <p>Autonomous agent that monitors all family Apple purchases, detects unusual spending patterns (new subscriptions, price increases, trial conversions), and alerts the organizer before charges hit.</p>
+          <p class="dream-combines">Combines: apple-family-billing, milady</p>
+          <p class="dream-arch">apple-family-billing provides charge history + member mapping. Milady agent runs daily, compares new charges against historical patterns, generates natural language alerts via Discord/SMS. Uses existi</p>
+        </div>
+        <div class="dream-card">
+          <h3>MusicMemoryBridge</h3>
+          <p>A service that captures ACE-Step generation events and stores them with audio embeddings in Milady's memory system. When users describe music they heard before, Milady could retrieve similar generations or trigger new ones matching the description.</p>
+          <p class="dream-combines">Combines: ACE-Step-1.5, milady, spark-dream-engine</p>
+          <p class="dream-arch">ACE-Step webhook -> spark-dream-engine ingestor -> audio embedding (VAE latents) -> Milady memory. Retrieval via semantic search on captions + VAE latent similarity.</p>
+        </div>
+        <div class="dream-card">
+          <h3>AIRadioDJ</h3>
+          <p>An autonomous music generation agent that creates continuous themed playlists. Uses ACE-Step's LM for creative prompting, DiT for generation, and maintains stylistic consistency across tracks by conditioning on previous generations' metadata.</p>
+          <p class="dream-combines">Combines: ACE-Step-1.5, milady</p>
+          <p class="dream-arch">Playlist theme prompt -> LM generates N track concepts with musical continuity -> DiT generates each track -> Cross-fade mixing -> Streaming output. State stored in Milady memory for session continuit</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <footer>
+    <div class="container">
+      <p>Generated 2026-03-15 10:45 by Spark Dream Engine</p>
+    </div>
+  </footer>
+</body>
+</html>
