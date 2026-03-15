@@ -7,12 +7,15 @@ current data from dream analyses, ingest state, and Milady memory.
 import json
 import logging
 import re
+import shutil
 from datetime import datetime
 from pathlib import Path
 
 from .config import settings
 
 logger = logging.getLogger(__name__)
+
+TEMPLATE_DIR = Path(__file__).parent.parent / "site-template"
 
 SITE_DIR = Path(__file__).parent.parent / "site"
 DREAMS_DIR = settings.dreams_dir
@@ -482,7 +485,11 @@ def regenerate_site():
     (SITE_DIR / "dreams.html").write_text(generate_dreams(analyses))
     (SITE_DIR / "gaps.html").write_text(generate_gaps(projects, analyses))
 
-    # Don't touch style.css — keep the existing one
+    # Copy style.css from template if not present
+    css_dest = SITE_DIR / "style.css"
+    css_src = TEMPLATE_DIR / "style.css"
+    if not css_dest.exists() and css_src.exists():
+        shutil.copy2(css_src, css_dest)
 
     logger.info(
         f"Site regenerated: {len(projects)} projects, {len(analyses)} analyses, "
