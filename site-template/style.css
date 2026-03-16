@@ -106,6 +106,8 @@ nav .container {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 2rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .nav-logo {
@@ -124,7 +126,45 @@ nav .container {
 
 .nav-links {
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  nav .container {
+    padding: 0.75rem 1rem;
+  }
+  .nav-links {
+    gap: 0.75rem;
+    width: 100%;
+    justify-content: center;
+  }
+  .nav-links a {
+    font-size: 0.75rem;
+  }
+  .container {
+    padding: 1rem;
+  }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .project-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .dream-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .unanalyzed-list {
+    columns: 1;
+  }
+  .data-table {
+    font-size: 0.75rem;
+  }
+  .data-table th, .data-table td {
+    padding: 0.5rem;
+  }
 }
 
 .nav-links a {
