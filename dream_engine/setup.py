@@ -110,6 +110,12 @@ def run_setup() -> dict:
     model_map = {"1": "opus", "2": "sonnet", "3": "haiku", "": "opus"}
     claude_model = model_map.get(model_choice, "opus")
 
+    # Nightly batch size
+    print("\n  How many projects should the nightly dream analyze?")
+    print("  (More = deeper coverage per night, but costs more)")
+    batch_input = input("  > [10] ").strip()
+    nightly_batch_size = int(batch_input) if batch_input.isdigit() else 10
+
     # Wiki.js
     print("\n  Optional: Wiki.js integration")
     print("  Push project pages to a Wiki.js instance?")
@@ -137,6 +143,7 @@ def run_setup() -> dict:
     config = {
         "DREAM_SCAN_PATHS": ",".join(selected_paths),
         "DREAM_CLAUDE_MODEL": claude_model,
+        "DREAM_NIGHTLY_BATCH_SIZE": str(nightly_batch_size),
         "DREAM_WIKI_ENABLED": str(wiki_enabled).lower(),
         "DREAM_WIKI_UPDATE_SCRIPT": wiki_update_script,
         "DREAM_WIKI_EXPORT_SCRIPT": wiki_export_script,

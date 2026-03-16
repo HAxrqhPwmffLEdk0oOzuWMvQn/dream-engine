@@ -367,7 +367,7 @@ async def dream_nightly(status: DreamStatus) -> dict:
                 stale.append(project)
 
     # Pick top 3 most stale
-    targets = stale[:3]
+    targets = stale[:settings.nightly_batch_size]
 
     if not targets:
         logger.info("No stale projects — skipping nightly dream")

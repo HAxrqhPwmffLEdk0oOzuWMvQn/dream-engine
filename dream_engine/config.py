@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     claude_binary: str = "claude"
     claude_model: str = "opus"
     claude_max_turns: int = 2000
+    nightly_batch_size: int = 10  # projects per nightly dream
     cluster_timeout_sec: int = 2700  # 45 min per cluster
     synthesis_timeout_sec: int = 3600  # 60 min for synthesis
 
