@@ -218,3 +218,128 @@ def _extract_proposals(text: str) -> list[dict]:
             "architecture": "",
         })
     return proposals
+
+
+def extract_narrative(text: str) -> dict:
+    """Extract rich narrative sections from an analysis.md file.
+
+    Returns dict with:
+        executive_summary: str
+        architecture_diagram: str (ASCII art block)
+        potentials: list[dict] with name, description, impact
+        discoveries: list[dict] with title, location, description
+        recommendations: dict with immediate, short_term, long_term lists
+        shared_patterns: str (markdown table)
+    """
+    result = {
+        "executive_summary": "",
+        "architecture_diagram": "",
+        "potentials": [],
+        "discoveries": [],
+        "recommendations": {"immediate": [], "short_term": [], "long_term": []},
+        "shared_patterns": "",
+    }
+
+    if not text:
+        return result
+
+    # Executive Summary — text between ## Executive Summary and next ##
+    exec_match = re.search(
+        r"^##\s+Executive Summary\s*\n(.*?)(?=^## |\Z)",
+        text, re.MULTILINE | re.DOTALL,
+    )
+    if exec_match:
+        result["executive_summary"] = exec_match.group(1).strip()
+
+    # Architecture Diagram — find ``` blocks within architecture sections
+    arch_section = re.search(
+        r"^##\s+[^\n]*Architecture[^\n]*\n(.*?)(?=^## |\Z)",
+        text, re.MULTILINE | re.DOTALL,
+    )
+    if arch_section:
+        code_match = re.search(r"```\s*\n(.*?)```", arch_section.group(1), re.DOTALL)
+        if code_match:
+            result["architecture_diagram"] = code_match.group(1).strip()
+
+    # Top Unrealized Potentials — numbered ### headings under ## Top.*Potential
+    pot_section = re.search(
+        r"^##\s+[^\n]*(?:Potential|Unrealized)[^\n]*\n(.*?)(?=^## |\Z)",
+        text, re.MULTILINE | re.DOTALL | re.IGNORECASE,
+    )
+    if pot_section:
+        body = pot_section.group(1)
+        for m in re.finditer(
+            r"^###\s+\d+\.\s+(.+?)(?:\s*\((.+?)\))?\s*$\n(.*?)(?=^### |\Z)",
+            body, re.MULTILINE | re.DOTALL,
+        ):
+            name = m.group(1).strip()
+            impact = m.group(2) or ""
+            desc_block = m.group(3).strip()
+            # Extract Components and Current State/Potential lines
+            components_m = re.search(r"\*\*Components?\*\*:\s*(.+)", desc_block)
+            potential_m = re.search(r"\*\*Potential\*\*:\s*(.+)", desc_block)
+            components = components_m.group(1).strip() if components_m else ""
+            potential = potential_m.group(1).strip() if potential_m else ""
+            description = potential or _extract_first_paragraph(desc_block)
+            result["potentials"].append({
+                "name": name,
+                "impact": impact,
+                "components": components,
+                "description": description[:400],
+            })
+
+    # Surprising/Forgotten Discoveries
+    disc_section = re.search(
+        r"^##\s+[^\n]*(?:Surprising|Forgotten|Discover)[^\n]*\n(.*?)(?=^## |\Z)",
+        text, re.MULTILINE | re.DOTALL | re.IGNORECASE,
+    )
+    if disc_section:
+        body = disc_section.group(1)
+        for m in re.finditer(
+            r"^###\s+\d+\.\s+(.+?)$\n(.*?)(?=^### |\Z)",
+            body, re.MULTILINE | re.DOTALL,
+        ):
+            title = m.group(1).strip()
+            block = m.group(2).strip()
+            loc_m = re.search(r"\*\*Location\*\*:\s*`?(.+?)`?\s*$", block, re.MULTILINE)
+            disc_m = re.search(r"\*\*Discovery\*\*:\s*(.+?)$", block, re.MULTILINE)
+            result["discoveries"].append({
+                "title": title,
+                "location": loc_m.group(1).strip() if loc_m else "",
+                "description": disc_m.group(1).strip()[:400] if disc_m else _extract_first_paragraph(block)[:400],
+            })
+
+    # Recommendations
+    rec_section = re.search(
+        r"^##\s+Recommendation[^\n]*\n(.*?)(?=^## |\Z)",
+        text, re.MULTILINE | re.DOTALL | re.IGNORECASE,
+    )
+    if rec_section:
+        body = rec_section.group(1)
+        for sub_key, pattern in [
+            ("immediate", r"Immediate.*?\n((?:\s*\d+\..*\n?)*)"),
+            ("short_term", r"Short.term.*?\n((?:\s*\d+\..*\n?)*)"),
+            ("long_term", r"Long.term.*?\n((?:\s*\d+\..*\n?)*)"),
+        ]:
+            m = re.search(pattern, body, re.IGNORECASE)
+            if m:
+                for line in m.group(1).strip().split("\n"):
+                    line = re.sub(r"^\s*\d+\.\s*", "", line).strip()
+                    if line and len(line) > 5:
+                        result["recommendations"][sub_key].append(line[:300])
+
+    # Shared Infrastructure Patterns — capture the table
+    pat_section = re.search(
+        r"^##\s+Shared[^\n]*Pattern[^\n]*\n(.*?)(?=^## |\Z)",
+        text, re.MULTILINE | re.DOTALL | re.IGNORECASE,
+    )
+    if pat_section:
+        # Grab just the markdown table
+        table_lines = []
+        for line in pat_section.group(1).strip().split("\n"):
+            if line.strip().startswith("|"):
+                table_lines.append(line.strip())
+        if table_lines:
+            result["shared_patterns"] = "\n".join(table_lines)
+
+    return result

@@ -29,96 +29,302 @@ dream_status = DreamStatus()
 
 @app.get("/admin", response_class=HTMLResponse)
 async def dashboard():
-    """Simple dashboard showing project status and ingest controls."""
+    """Admin dashboard — ingests, dreams, site regen."""
     projects = discover_projects()
     state = load_state()
     mb_projects = [p for p in projects if p.has_memory_bank]
 
-    rows = []
+    # Dream history count
+    dream_count = 0
+    history_path = settings.state_dir / "dream_history.json"
+    if history_path.exists():
+        try:
+            dream_count = len(json.loads(history_path.read_text()))
+        except Exception:
+            pass
+
+    # Project table rows
+    rows = ""
     for p in mb_projects:
         s = state.get(p.name, {})
-        last = s.get("last_ingested", "never")
+        last = s.get("last_ingested", "—")
         chunks = s.get("chunks", 0)
-        rows.append(f"""
-            <tr>
-                <td class="px-4 py-2 font-mono text-sm">{p.name}</td>
-                <td class="px-4 py-2 text-sm text-gray-400">{len(p.files_read) if hasattr(p, 'files_read') else '—'}</td>
-                <td class="px-4 py-2 text-sm">{chunks} chunks</td>
-                <td class="px-4 py-2 text-sm text-gray-400">{last}</td>
-            </tr>
-        """)
+        rows += f"<tr><td>{p.name}</td><td>{chunks}</td><td>{last}</td></tr>\n"
+
+    # Live dream banner (shown when a dream is running)
+    if dream_status.running:
+        cluster_bit = f'<span style="color:var(--text-muted);font-size:0.85rem;margin-left:1.5rem">cluster: <strong style="color:var(--text-secondary)">{dream_status.current_cluster}</strong></span>' if dream_status.current_cluster else ""
+        dream_banner = f"""<div style="background:linear-gradient(90deg,#141414,rgba(124,92,191,0.1));border-bottom:1px solid var(--accent-dim);padding:0.75rem 0">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;padding-top:0;padding-bottom:0">
+    <div style="display:flex;align-items:center;gap:0.75rem">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--status-active);box-shadow:0 0 8px var(--status-active);animation:pulse-glow 1.5s ease-in-out infinite"></span>
+      <strong style="color:var(--accent-bright)">Dream Running</strong>
+      <span style="color:var(--text-muted);font-size:0.85rem">phase: <strong style="color:var(--text-secondary)">{dream_status.phase or 'initializing'}</strong></span>
+      {cluster_bit}
+    </div>
+    <a href="/api/dream/log" target="_blank" style="font-size:0.8rem;color:var(--accent-bright);border:1px solid var(--accent-dim);padding:0.3rem 0.75rem;border-radius:4px;text-decoration:none">View Log ↗</a>
+  </div>
+</div>"""
+        auto_refresh = "setTimeout(() => location.reload(), 10000);"
+    else:
+        dream_banner = ""
+        auto_refresh = ""
+
+    batch_size = settings.nightly_batch_size
 
     return f"""<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Spark Dream Engine</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Dream Engine</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .action-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin: 1.5rem 0 2.5rem;
+    }}
+    .action-card {{
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+    }}
+    .action-card h3 {{
+      color: var(--text-primary);
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }}
+    .action-desc {{
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      flex: 1;
+      margin-bottom: 1.25rem;
+      line-height: 1.6;
+    }}
+    .btn {{
+      display: block;
+      width: 100%;
+      padding: 0.6rem 1.25rem;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+      text-decoration: none;
+    }}
+    .btn-primary {{ background: var(--accent); color: white; }}
+    .btn-primary:hover {{ background: var(--accent-bright); color: white; }}
+    .btn-outline {{
+      background: transparent;
+      color: var(--accent-bright);
+      border: 1px solid var(--accent-dim);
+    }}
+    .btn-outline:hover {{ background: rgba(124,92,191,0.15); }}
+    .btn-muted {{
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }}
+    .btn-muted:hover {{ background: var(--bg-hover); border-color: var(--border-accent); color: var(--text-primary); }}
+    .btn:disabled {{ opacity: 0.4; cursor: not-allowed; }}
+    .action-status {{
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.75rem;
+      min-height: 1.1rem;
+      font-family: var(--font-mono);
+    }}
+    .action-status.ok {{ color: var(--status-active); }}
+    .action-status.err {{ color: var(--status-blocked); }}
+    .section-label {{
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+      margin-top: 2rem;
+    }}
+    .section-label::before {{
+      content: "// ";
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }}
+    .page-header {{ margin-bottom: 1.5rem; }}
+    .page-header h1 {{ margin-bottom: 0.25rem; }}
+    .page-header p {{ margin: 0; }}
+  </style>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen p-8">
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-bold mb-2">Spark Dream Engine</h1>
-        <p class="text-gray-400 mb-6">Knowledge ingestion + deep dreaming for Milady/Spark</p>
-
-        <div class="flex gap-4 mb-8 flex-wrap">
-            <button onclick="fetch('/api/ingest', {{method:'POST'}}).then(r=>r.json()).then(d=>{{alert('Ingested '+d.projects_ingested+' projects, '+d.total_chunks+' chunks');location.reload()}})"
-                class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm font-medium"
-                title="Scan ~/Desktop/*/memory-bank/ for changes since last ingest. Upload new chunks to Milady memory + update Wiki.js pages. Fast — takes ~30 seconds.">
-                Ingest Changed
-            </button>
-            <button onclick="fetch('/api/ingest?force=true', {{method:'POST'}}).then(r=>r.json()).then(d=>{{alert('Force ingested '+d.projects_ingested+' projects');location.reload()}})"
-                class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-sm font-medium"
-                title="Re-ingest ALL projects regardless of whether they changed. Useful after Milady restart or to refresh stale data. Takes ~60 seconds.">
-                Force Ingest All
-            </button>
-            <button onclick="if(confirm('Start full dream? This spawns Claude Code Opus for each of 5 project clusters and takes 1-2 hours.'))fetch('/api/dream/start', {{method:'POST'}}).then(r=>r.json()).then(d=>alert(JSON.stringify(d)))"
-                class="bg-amber-600 hover:bg-amber-700 px-4 py-2 rounded text-sm font-medium"
-                title="Deep analysis: spawns Claude Code Opus to read actual source code across 5 clusters (Photo, Business, AI Agents, Dashboards, Infra) + synthesis. Finds hidden capabilities, dead code, cross-project connections. Takes 1-2 hours.">
-                Full Dream (Opus)
-            </button>
-            <button onclick="fetch('/api/dream/nightly', {{method:'POST'}}).then(r=>r.json()).then(d=>alert(JSON.stringify(d)))"
-                class="bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded text-sm font-medium"
-                title="Quick dream: checks which projects changed since last dream, picks the top 3 stale ones, spawns Claude Code Opus for focused analysis on each. Takes 10-30 minutes.">
-                Nightly Dream
-            </button>
-        </div>
-
-        <div id="dream-status" class="bg-gray-900 rounded-lg p-4 mb-8 {'hidden' if not dream_status.running else ''}">
-            <h2 class="text-lg font-semibold mb-2">Dream Status</h2>
-            <p class="text-sm">Phase: <span class="text-amber-400">{dream_status.phase or 'idle'}</span></p>
-            <p class="text-sm">Cluster: <span class="text-blue-400">{dream_status.current_cluster or '—'}</span></p>
-            <p class="text-sm">Completed: {', '.join(dream_status.completed_clusters) or '—'}</p>
-        </div>
-
-        <div class="grid grid-cols-3 gap-4 mb-8">
-            <div class="bg-gray-900 rounded-lg p-4">
-                <div class="text-2xl font-bold">{len(projects)}</div>
-                <div class="text-gray-400 text-sm">Total Projects</div>
-            </div>
-            <div class="bg-gray-900 rounded-lg p-4">
-                <div class="text-2xl font-bold">{len(mb_projects)}</div>
-                <div class="text-gray-400 text-sm">With Memory Banks</div>
-            </div>
-            <div class="bg-gray-900 rounded-lg p-4">
-                <div class="text-2xl font-bold">{len(state)}</div>
-                <div class="text-gray-400 text-sm">Ingested</div>
-            </div>
-        </div>
-
-        <h2 class="text-xl font-semibold mb-3">Projects with Memory Banks</h2>
-        <table class="w-full bg-gray-900 rounded-lg overflow-hidden">
-            <thead>
-                <tr class="bg-gray-800">
-                    <th class="px-4 py-2 text-left text-sm">Project</th>
-                    <th class="px-4 py-2 text-left text-sm">Files</th>
-                    <th class="px-4 py-2 text-left text-sm">Ingested</th>
-                    <th class="px-4 py-2 text-left text-sm">Last Ingest</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-800">
-                {''.join(rows)}
-            </tbody>
-        </table>
+<body>
+  <nav>
+    <div class="container">
+      <a href="/" class="nav-logo"><span class="spark">DREAM</span> ENGINE</a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/projects.html">Projects</a>
+        <a href="/connections.html">Connections</a>
+        <a href="/dreams.html">Dreams</a>
+        <a href="/gaps.html">Gaps</a>
+        <a href="/admin" class="active">Admin</a>
+      </div>
     </div>
+  </nav>
+
+  {dream_banner}
+
+  <div class="container">
+    <div class="page-header">
+      <h1>Admin</h1>
+      <p style="color:var(--text-muted)">Trigger ingests, start dreams, regenerate the site.</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">{len(projects)}</div>
+        <div class="stat-label">Total Projects</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{len(mb_projects)}</div>
+        <div class="stat-label">With Memory Banks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{len(state)}</div>
+        <div class="stat-label">Ingested</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{dream_count}</div>
+        <div class="stat-label">Dreams Run</div>
+      </div>
+    </div>
+
+    <div class="section-label">Actions</div>
+    <div class="action-grid">
+
+      <div class="action-card">
+        <h3>Ingest Changed</h3>
+        <div class="action-desc">Scan project dirs for files that changed since last ingest. Uploads new chunks to Milady memory and updates Wiki.js pages. Fast — typically 10–30 seconds.</div>
+        <button class="btn btn-primary" onclick="runAction('/api/ingest','POST','st-ingest','Scanning...', r=>'✓ '+r.projects_ingested+' projects, '+r.total_chunks+' chunks')">
+          Run Ingest
+        </button>
+        <div id="st-ingest" class="action-status"></div>
+      </div>
+
+      <div class="action-card">
+        <h3>Force Ingest All</h3>
+        <div class="action-desc">Re-upload all projects regardless of whether they changed. Use this after restarting Milady, or to refresh stale knowledge. Takes ~60 seconds for large project sets.</div>
+        <button class="btn btn-muted" onclick="runAction('/api/ingest?force=true','POST','st-force','Force ingesting all...', r=>'✓ '+r.projects_ingested+' projects re-uploaded')">
+          Force Ingest All
+        </button>
+        <div id="st-force" class="action-status"></div>
+      </div>
+
+      <div class="action-card">
+        <h3>Nightly Dream</h3>
+        <div class="action-desc">Picks the {batch_size} most stale projects and spawns Claude Code Opus for focused source-code analysis on each. Runs in the background — typically 10–30 minutes.</div>
+        <button class="btn btn-primary" id="btn-nightly" onclick="startDream('/api/dream/nightly','st-nightly',this)">
+          Start Nightly Dream
+        </button>
+        <div id="st-nightly" class="action-status"></div>
+      </div>
+
+      <div class="action-card">
+        <h3>Full Dream</h3>
+        <div class="action-desc">Deep analysis across all project clusters plus a synthesis pass. Claude Code Opus reads actual source files — not just docs — and finds hidden connections. Takes 1–2 hours.</div>
+        <button class="btn btn-outline" id="btn-full" onclick="confirmFull(this)">
+          Start Full Dream
+        </button>
+        <div id="st-full" class="action-status"></div>
+      </div>
+
+      <div class="action-card">
+        <h3>Regenerate Site</h3>
+        <div class="action-desc">Rebuild the static dream site from current dream outputs and ingest state. Run this if the site looks stale after a dream completes or after manual edits to dream files.</div>
+        <button class="btn btn-muted" onclick="runAction('/api/site/regenerate','POST','st-regen','Regenerating...', r=>'✓ Site regenerated')">
+          Regenerate Site
+        </button>
+        <div id="st-regen" class="action-status"></div>
+      </div>
+
+    </div>
+
+    <div class="section-label">Projects with Memory Banks</div>
+    <table class="data-table" style="margin-bottom:2rem">
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Chunks</th>
+          <th>Last Ingested</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows}
+      </tbody>
+    </table>
+
+    <div style="margin-bottom:3rem">
+      <a href="/api/dream/log" target="_blank" class="btn btn-muted" style="display:inline-block;width:auto;padding:0.5rem 1.25rem">
+        View Dream Log ↗
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container"><p>Dream Engine — AI-powered project analysis</p></div>
+  </footer>
+
+  <script>
+    async function runAction(url, method, sid, pending, fmt) {{
+      const el = document.getElementById(sid);
+      el.className = 'action-status';
+      el.textContent = pending;
+      try {{
+        const r = await fetch(url, {{method}});
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || r.statusText);
+        el.className = 'action-status ok';
+        el.textContent = fmt(d);
+      }} catch(e) {{
+        el.className = 'action-status err';
+        el.textContent = '✗ ' + e.message;
+      }}
+    }}
+
+    async function startDream(url, sid, btn) {{
+      if (btn.disabled) return;
+      const el = document.getElementById(sid);
+      el.className = 'action-status';
+      el.textContent = 'Starting...';
+      btn.disabled = true;
+      try {{
+        const r = await fetch(url, {{method:'POST'}});
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || r.statusText);
+        el.className = 'action-status ok';
+        el.textContent = '✓ Dream started — running in background';
+        setTimeout(() => location.reload(), 2000);
+      }} catch(e) {{
+        el.className = 'action-status err';
+        el.textContent = '✗ ' + e.message;
+        btn.disabled = false;
+      }}
+    }}
+
+    function confirmFull(btn) {{
+      if (!confirm('Start a full dream?\\n\\nClaude Code Opus will analyze all project clusters + synthesis. This takes 1–2 hours.')) return;
+      startDream('/api/dream/start', 'st-full', btn);
+    }}
+
+    {auto_refresh}
+  </script>
 </body>
 </html>"""
 
@@ -319,6 +525,57 @@ async def api_dream_log_stream():
                 break
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.post("/api/proposals/star/{proposal_id}")
+async def api_proposal_star(proposal_id: str, starred: bool = True):
+    """Star or unstar a dream proposal."""
+    path = settings.state_dir / "starred_proposals.json"
+    data = json.loads(path.read_text()) if path.exists() else {"starred": {}}
+    if starred:
+        data["starred"][proposal_id] = {"timestamp": datetime.now().isoformat()}
+    else:
+        data["starred"].pop(proposal_id, None)
+    settings.state_dir.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2))
+    return {"ok": True, "proposal_id": proposal_id, "starred": starred}
+
+
+@app.get("/api/proposals/starred")
+async def api_proposals_starred():
+    """Get starred proposals."""
+    path = settings.state_dir / "starred_proposals.json"
+    if path.exists():
+        return json.loads(path.read_text())
+    return {"starred": {}}
+
+
+@app.get("/api/gaps/actions")
+async def api_gaps_actions():
+    """Get current gaps action state (done/dismissed items)."""
+    path = settings.state_dir / "gaps_actions.json"
+    if path.exists():
+        return json.loads(path.read_text())
+    return {"actions": {}}
+
+
+@app.post("/api/gaps/actions/{item_id}")
+async def api_gaps_action(item_id: str, status: str = "done"):
+    """Mark a gaps item as done, dismissed, or open (re-open)."""
+    if status not in ("done", "dismissed", "open"):
+        raise HTTPException(400, "Status must be done, dismissed, or open")
+    path = settings.state_dir / "gaps_actions.json"
+    data = json.loads(path.read_text()) if path.exists() else {"actions": {}}
+    if status == "open":
+        data["actions"].pop(item_id, None)
+    else:
+        data["actions"][item_id] = {
+            "status": status,
+            "timestamp": datetime.now().isoformat(),
+        }
+    settings.state_dir.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2))
+    return {"ok": True, "item_id": item_id, "status": status}
 
 
 # Mount dream site at root — MUST be last so API routes take priority
